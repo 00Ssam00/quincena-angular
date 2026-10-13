@@ -1,0 +1,58 @@
+<div class="overlay" (click)="alClicOverlay($event)">
+  <div
+    class="dialogo"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="titulo-categoria"
+    appFocusTrap
+  >
+    <form class="formulario" [formGroup]="formulario" (ngSubmit)="enviar()" novalidate>
+      <header class="cabecera">
+        <h2 id="titulo-categoria">Nueva categoría</h2>
+        <button type="button" class="cerrar" (click)="cerrar.emit()">Cerrar</button>
+      </header>
+
+      <div class="campo">
+        <label class="etiqueta" for="nombre">Nombre</label>
+        <input
+          id="nombre"
+          #campoNombre
+          class="texto"
+          [class.invalido]="mostrarError()"
+          type="text"
+          autocomplete="off"
+          placeholder="Por ejemplo: Mascotas"
+          formControlName="nombre"
+          [attr.aria-invalid]="mostrarError()"
+        />
+        @if (mostrarError()) {
+          <p class="error" role="alert">{{ mensajeError() }}</p>
+        }
+      </div>
+
+      <div class="campo">
+        <span class="etiqueta" id="etiqueta-color">Color</span>
+        <div class="colores" role="group" aria-labelledby="etiqueta-color">
+          @for (c of colores; track c) {
+            <button
+              type="button"
+              class="color"
+              [class.elegido]="formulario.controls.color.value === c"
+              [style.background-color]="c"
+              [attr.aria-label]="'Color ' + c"
+              [attr.aria-pressed]="formulario.controls.color.value === c"
+              (click)="elegirColor(c)"
+            ></button>
+          }
+        </div>
+      </div>
+
+      <footer class="acciones">
+        <button type="button" class="boton secundario" (click)="cerrar.emit()">Cancelar</button>
+        <button type="submit" class="boton primario" [disabled]="guardando()">
+          {{ guardando() ? 'Creando…' : 'Crear categoría' }}
+        </button>
+      </footer>
+    </form>
+  </div>
+</div>

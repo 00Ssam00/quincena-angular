@@ -1,0 +1,70 @@
+<div class="pagina">
+  <header class="encabezado">
+    <div>
+      <p class="subtitulo">Agrupa tus gastos</p>
+      <h1>Categorías</h1>
+    </div>
+    <button
+      type="button"
+      class="boton primario"
+      [disabled]="estado() !== 'listo'"
+      (click)="abrirModal()"
+    >
+      Nueva categoría
+    </button>
+  </header>
+
+  @if (estado() === 'cargando') {
+    <app-card>
+      <div class="lista-carga" aria-busy="true">
+        @for (n of [1, 2, 3, 4, 5]; track n) {
+          <app-skeleton height="52px" radius="10px" />
+        }
+      </div>
+    </app-card>
+  } @else if (estado() === 'error') {
+    <app-card>
+      <div class="mensaje" role="alert">
+        <div class="simbolo error"><app-logo variant="mark" /></div>
+        <h2>No pudimos cargar tus categorías</h2>
+        <p>Revisa tu conexión e inténtalo de nuevo.</p>
+        <button type="button" class="boton primario" (click)="cargar()">Reintentar</button>
+      </div>
+    </app-card>
+  } @else {
+    <app-card>
+      <ul class="lista">
+        @for (fila of filas(); track fila.categoria.id; let i = $index) {
+          <li class="fila" [style.animation-delay.ms]="i * 50">
+            <span class="punto" [style.background-color]="fila.categoria.color" aria-hidden="true"></span>
+            <span class="datos">
+              <span class="nombre">{{ fila.categoria.nombre }}</span>
+              <span class="detalle">
+                {{ fila.cantidad }} {{ fila.cantidad === 1 ? 'movimiento' : 'movimientos' }}
+              </span>
+            </span>
+            <span class="total tabular">{{ -fila.total | cop }}</span>
+          </li>
+        } @empty {
+          <li class="mensaje">
+            <div class="simbolo"><app-logo variant="mark" /></div>
+            <h2>Aún no tienes categorías</h2>
+            <p>Crea la primera para empezar a clasificar tus gastos.</p>
+            <button type="button" class="boton primario" (click)="abrirModal()">
+              Nueva categoría
+            </button>
+          </li>
+        }
+      </ul>
+    </app-card>
+  }
+</div>
+
+@if (modalAbierto()) {
+  <app-categoria-form-modal
+    [nombresExistentes]="nombres()"
+    [guardando]="guardando()"
+    (guardar)="crear($event)"
+    (cerrar)="cerrarModal()"
+  />
+}
