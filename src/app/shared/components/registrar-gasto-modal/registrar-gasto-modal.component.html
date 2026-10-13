@@ -52,7 +52,7 @@
         <span class="etiqueta" [class.invalida]="mostrarError('categoria')">Categoría</span>
         <app-category-chips
           etiquetaAccesible="Categoría del gasto"
-          [opciones]="opcionesCategoria"
+          [opciones]="opcionesCategoria()"
           [seleccionado]="formulario.controls.categoria.value"
           [error]="mostrarError('categoria')"
           (seleccionar)="elegirCategoria($event)"
@@ -75,7 +75,7 @@
           />
         </div>
       } @else {
-        <p class="fecha-fija">Fecha: {{ movimiento()?.dia }} {{ mes() }} (no se puede cambiar)</p>
+        <p class="fecha-fija">Fecha: {{ diaFija() }} {{ mes() }} (no se puede cambiar)</p>
       }
 
       <div class="previa">

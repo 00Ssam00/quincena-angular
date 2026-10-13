@@ -1,28 +1,35 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, defer, delay, mergeMap, Observable, of, throwError, timer } from 'rxjs';
-import { DATOS_MOCK } from '../data/quincena.mock';
-import { Movimiento, NuevoGasto } from '../models/movimiento.model';
-import { horaActual } from '../utils/fechas';
+import {
+  METODO_PAGO_POR_DEFECTO,
+  MOVIMIENTOS_MOCK,
+  PERIODO_ACTUAL_MOCK,
+} from '../data/quincena.mock';
+import { Movimiento, MovimientoDto } from '../models/movimiento.model';
+import { timestampLocal } from '../utils/fechas';
 
-// Simula una API de movimientos. El estado vive en un BehaviorSubject privado y es
-// inmutable: cada cambio crea un arreglo nuevo, nunca se modifica el anterior.
-// Resumen y Movimientos leen este MISMO estado, por eso un gasto aparece en ambas pantallas.
+// Simula una API REST de movimientos (tabla transactions): getAll, getById, create, update, delete.
+// Todos devuelven Observable con of().pipe(delay()), así que en noviembre solo cambia el cuerpo
+// de cada método por una llamada con HttpClient y los componentes no se tocan.
+//
+// El estado es un BehaviorSubject privado e inmutable: cada cambio crea un arreglo nuevo.
+// Resumen y Movimientos leen este MISMO estado (movimientos$).
 @Injectable({ providedIn: 'root' })
 export class MovimientosService {
   private readonly estado = new BehaviorSubject<Movimiento[]>(
-    DATOS_MOCK.movimientos.map((m) => ({ ...m })),
+    MOVIMIENTOS_MOCK.map((m) => ({ ...m })),
   );
   readonly movimientos$ = this.estado.asObservable();
 
   private simularError = false;
-  private siguienteId = DATOS_MOCK.movimientos.length + 1;
+  private siguienteId = MOVIMIENTOS_MOCK.length + 1;
 
   // Interruptor para probar el estado de error y el botón "Reintentar".
   setSimularError(activo: boolean): void {
     this.simularError = activo;
   }
 
-  getMovimientos(): Observable<Movimiento[]> {
+  getAll(): Observable<Movimiento[]> {
     return defer(() =>
       this.simularError
         ? timer(1200).pipe(mergeMap(() => throwError(() => new Error('Error de conexión'))))
@@ -30,52 +37,64 @@ export class MovimientosService {
     );
   }
 
-  registrarGasto(datos: NuevoGasto): Observable<Movimiento> {
+  getById(id: string): Observable<Movimiento> {
+    return defer(() => {
+      const movimiento = this.estado.value.find((m) => m.id === id);
+      return movimiento
+        ? of({ ...movimiento })
+        : throwError(() => new Error('El movimiento no existe.'));
+    }).pipe(delay(300));
+  }
+
+  create(datos: MovimientoDto): Observable<Movimiento> {
     return defer(() => {
       const nuevo: Movimiento = {
         id: `m${this.siguienteId++}`,
-        dia: datos.dia,
-        descripcion: datos.descripcion.trim() || datos.categoria,
-        categoria: datos.categoria,
-        hora: horaActual(),
+        periodo_id: PERIODO_ACTUAL_MOCK.id,
+        categoria_id: datos.categoria_id,
+        metodo_pago_id: METODO_PAGO_POR_DEFECTO,
+        tarjeta_id: null,
+        tipo: 'expense',
         monto: datos.monto,
+        descripcion: datos.descripcion.trim(),
+        nota: null,
+        fecha: datos.fecha,
+        creado_en: timestampLocal(),
       };
       this.estado.next([nuevo, ...this.estado.value]);
       return of({ ...nuevo });
     }).pipe(delay(400));
   }
 
-  // Edita un movimiento existente: reemplaza solo ese elemento y crea un arreglo nuevo.
-  actualizarGasto(id: string, datos: NuevoGasto): Observable<Movimiento> {
+  // Reemplaza solo el elemento editado; el resto del arreglo se conserva.
+  update(id: string, datos: MovimientoDto): Observable<Movimiento> {
     return defer(() => {
       const actual = this.estado.value.find((m) => m.id === id);
       if (!actual) return throwError(() => new Error('El movimiento no existe.'));
       const editado: Movimiento = {
         ...actual,
-        dia: datos.dia,
-        descripcion: datos.descripcion.trim() || datos.categoria,
-        categoria: datos.categoria,
+        categoria_id: datos.categoria_id,
         monto: datos.monto,
+        descripcion: datos.descripcion.trim(),
+        fecha: datos.fecha,
       };
       this.estado.next(this.estado.value.map((m) => (m.id === id ? editado : m)));
       return of({ ...editado });
     }).pipe(delay(400));
   }
 
-  eliminarGasto(id: string): Observable<Movimiento> {
+  delete(id: string): Observable<void> {
     return defer(() => {
-      const existente = this.estado.value.find((m) => m.id === id);
-      if (!existente) return throwError(() => new Error('El movimiento no existe.'));
+      if (!this.estado.value.some((m) => m.id === id)) {
+        return throwError(() => new Error('El movimiento no existe.'));
+      }
       this.estado.next(this.estado.value.filter((m) => m.id !== id));
-      return of({ ...existente });
+      return of(undefined);
     }).pipe(delay(400));
   }
 
-  // Revierte un gasto registrado (botón "Deshacer" del toast).
-  deshacerGasto(id: string): Observable<void> {
-    return defer(() => {
-      this.estado.next(this.estado.value.filter((m) => m.id !== id));
-      return of(undefined);
-    });
+  // Consulta síncrona para validar que una categoría no se borre estando en uso.
+  categoriaEnUso(categoriaId: string): boolean {
+    return this.estado.value.some((m) => m.categoria_id === categoriaId);
   }
 }

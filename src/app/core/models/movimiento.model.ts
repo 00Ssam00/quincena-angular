@@ -1,19 +1,23 @@
-import { Categoria } from './categoria';
-
+// Tabla transactions del esquema. El día y la hora NO se guardan: se calculan desde
+// `fecha` y `creado_en` con el pipe diaHora (SharedModule).
 export interface Movimiento {
   id: string;
-  dia: number; // día del mes dentro de la quincena
-  descripcion: string;
-  categoria: Categoria;
-  hora: string; // "6:40 p. m." o "Pago fijo"
+  periodo_id: string;
+  categoria_id: string;
+  metodo_pago_id: string;
+  tarjeta_id: string | null;
+  tipo: 'income' | 'expense';
   monto: number;
-  pagoFijoId?: string; // presente si el movimiento es un pago fijo ya pagado
+  descripcion: string;
+  nota: string | null;
+  fecha: string; // yyyy-MM-dd
+  creado_en: string; // yyyy-MM-ddTHH:mm:ss (created_at)
 }
 
-// Lo que produce el modal (al registrar o al editar un gasto).
-export interface NuevoGasto {
+// Datos que envía el formulario al servicio (el servicio completa el resto).
+export interface MovimientoDto {
+  categoria_id: string;
   monto: number;
-  descripcion: string; // puede venir vacía: se usa el nombre de la categoría
-  categoria: Categoria;
-  dia: number; // día del mes
+  descripcion: string; // el formulario ya la completa con el nombre de la categoría si queda vacía
+  fecha: string;
 }

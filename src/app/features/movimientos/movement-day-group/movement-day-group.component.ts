@@ -1,12 +1,19 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
-import { MovimientoVista } from '../../../core/models/quincena.model';
+import { Movimiento } from '../../../core/models/movimiento.model';
+
+// Un renglón de la lista: el movimiento tal como llega del servicio + lo que la vista necesita.
+export interface ItemMovimiento {
+  movimiento: Movimiento;
+  categoria: string; // nombre de la categoría
+  esPagoFijo: boolean;
+}
 
 export interface GrupoDia {
-  dia: number;
+  fecha: string;
   titulo: string;
   reciente: boolean; // Hoy se muestra en color de texto; los demás en gris
   subtotal: number;
-  items: MovimientoVista[];
+  items: ItemMovimiento[];
 }
 
 @Component({

@@ -2,17 +2,18 @@ import { Component, computed, DestroyRef, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { debounceTime, distinctUntilChanged, Subscription, switchMap } from 'rxjs';
-import { CATEGORIAS } from '../../../core/models/categoria';
-import { Movimiento, NuevoGasto } from '../../../core/models/movimiento.model';
+import { combineLatest, debounceTime, distinctUntilChanged, Subscription, switchMap } from 'rxjs';
+import { Categoria } from '../../../core/models/categoria.model';
+import { Movimiento, MovimientoDto } from '../../../core/models/movimiento.model';
+import { CategoriaService } from '../../../core/services/categoria.service';
 import { MovimientosService } from '../../../core/services/movimientos.service';
 import { QuincenaService } from '../../../core/services/quincena.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { sumar, } from '../../../core/utils/calculos';
-import { abreviaturaMes, normalizar } from '../../../core/utils/fechas';
+import { sumar } from '../../../core/utils/calculos';
+import { normalizar } from '../../../core/utils/fechas';
 import { ChipOpcion } from '../../../shared/components/category-chips/category-chips.component';
 import { CopPipe } from '../../../shared/pipes/cop.pipe';
-import { GrupoDia } from '../movement-day-group/movement-day-group.component';
+import { GrupoDia, ItemMovimiento } from '../movement-day-group/movement-day-group.component';
 
 type Estado = 'cargando' | 'listo' | 'error';
 
@@ -26,7 +27,8 @@ type Estado = 'cargando' | 'listo' | 'error';
 export class MovimientosPageComponent implements OnInit {
   protected readonly estado = signal<Estado>('cargando');
   protected readonly movimientos = signal<Movimiento[]>([]);
-  protected readonly categoria = signal(''); // '' = Todas
+  protected readonly categorias = signal<Categoria[]>([]);
+  protected readonly categoria = signal(''); // id de la categoría elegida; '' = Todas
   protected readonly modalAbierto = signal(false);
   // Bandera de edición: null = se está creando; con valor = se está editando ese movimiento.
   protected readonly editando = signal<Movimiento | null>(null);
@@ -41,15 +43,23 @@ export class MovimientosPageComponent implements OnInit {
     { initialValue: '' },
   );
 
+  // Datos de la quincena actual (sin espera: ya se usan en esta pantalla).
+  protected readonly base;
   protected readonly titulo: string;
-  protected readonly quincena;
+
+  private readonly nombresCategoria = computed(
+    () => new Map(this.categorias().map((c) => [c.id, c.nombre])),
+  );
 
   // 1) Resultado de la búsqueda (sin tildes ni mayúsculas) sobre descripción y categoría.
   private readonly porBusqueda = computed(() => {
     const q = normalizar(this.texto().trim());
     if (!q) return this.movimientos();
+    const nombres = this.nombresCategoria();
     return this.movimientos().filter(
-      (m) => normalizar(m.descripcion).includes(q) || normalizar(m.categoria).includes(q),
+      (m) =>
+        normalizar(m.descripcion).includes(q) ||
+        normalizar(nombres.get(m.categoria_id) ?? '').includes(q),
     );
   });
 
@@ -58,10 +68,10 @@ export class MovimientosPageComponent implements OnInit {
     const lista = this.porBusqueda();
     return [
       { valor: '', etiqueta: 'Todas', conteo: lista.length },
-      ...CATEGORIAS.map((c) => ({
-        valor: c,
-        etiqueta: c,
-        conteo: lista.filter((m) => m.categoria === c).length,
+      ...this.categorias().map((c) => ({
+        valor: c.id,
+        etiqueta: c.nombre,
+        conteo: lista.filter((m) => m.categoria_id === c.id).length,
       })),
     ];
   });
@@ -69,7 +79,7 @@ export class MovimientosPageComponent implements OnInit {
   // 3) Búsqueda + categoría elegida.
   protected readonly filtrados = computed(() => {
     const cat = this.categoria();
-    return cat ? this.porBusqueda().filter((m) => m.categoria === cat) : this.porBusqueda();
+    return cat ? this.porBusqueda().filter((m) => m.categoria_id === cat) : this.porBusqueda();
   });
 
   protected readonly resumen = computed(() => ({
@@ -77,40 +87,38 @@ export class MovimientosPageComponent implements OnInit {
     total: sumar(this.filtrados().map((m) => m.monto)),
   }));
 
-  // 4) Grupos por día, del más reciente al más antiguo.
+  // 4) Grupos por fecha, de la más reciente a la más antigua.
   protected readonly grupos = computed<GrupoDia[]>(() => {
-    const porDia = new Map<number, Movimiento[]>();
-    for (const m of this.filtrados()) {
-      porDia.set(m.dia, [...(porDia.get(m.dia) ?? []), m]);
+    const nombres = this.nombresCategoria();
+    const { hoy, pagos } = this.base;
+    const porFecha = new Map<string, ItemMovimiento[]>();
+    for (const movimiento of this.filtrados()) {
+      const item: ItemMovimiento = {
+        movimiento,
+        categoria: nombres.get(movimiento.categoria_id) ?? 'Sin categoría',
+        esPagoFijo: this.quincenaService.esPagoFijo(movimiento, pagos),
+      };
+      porFecha.set(movimiento.fecha, [...(porFecha.get(movimiento.fecha) ?? []), item]);
     }
-    return [...porDia.entries()]
-      .sort(([a], [b]) => b - a)
-      .map(([dia, items]) => {
-        const { titulo, reciente } = this.quincenaService.encabezadoDia(dia);
-        return {
-          dia,
-          titulo,
-          reciente,
-          subtotal: sumar(items.map((m) => m.monto)),
-          items: items.map((m) => ({
-            id: m.id,
-            nombre: m.descripcion,
-            subtitulo: `${m.categoria} – ${m.hora}`,
-            monto: m.monto,
-          })),
-        };
-      });
+    return [...porFecha.entries()]
+      .sort(([a], [b]) => b.localeCompare(a))
+      .map(([fecha, items]) => ({
+        fecha,
+        ...this.quincenaService.encabezadoDia(fecha, hoy),
+        subtotal: sumar(items.map((i) => i.movimiento.monto)),
+        items,
+      }));
   });
 
   // Datos de la quincena actual para el modal (saldo, pagos pendientes, días restantes).
   protected readonly contexto = computed(() =>
     this.quincenaService.vistaActual(
-      this.quincena,
+      this.base,
       this.movimientos(),
-      this.quincena.arrastre,
+      this.categorias(),
+      this.base.periodo.arrastre,
     ),
   );
-  protected readonly mes: string;
 
   private readonly cop = new CopPipe();
   private suscripcion?: Subscription;
@@ -118,13 +126,13 @@ export class MovimientosPageComponent implements OnInit {
   constructor(
     private quincenaService: QuincenaService,
     private movimientosService: MovimientosService,
+    private categoriaService: CategoriaService,
     private toastService: ToastService,
     private route: ActivatedRoute,
     private destroyRef: DestroyRef,
   ) {
-    this.quincena = this.quincenaService.quincenaActual;
-    this.titulo = this.quincena.titulo;
-    this.mes = abreviaturaMes(this.quincena.inicio);
+    this.base = this.quincenaService.baseActual;
+    this.titulo = this.base.periodo.etiqueta;
   }
 
   ngOnInit(): void {
@@ -138,15 +146,19 @@ export class MovimientosPageComponent implements OnInit {
   protected cargar(): void {
     this.suscripcion?.unsubscribe();
     this.estado.set('cargando');
+    // getAll() simula la espera (y el error); después seguimos el estado compartido.
     this.suscripcion = this.movimientosService
-      .getMovimientos()
+      .getAll()
       .pipe(
-        switchMap(() => this.movimientosService.movimientos$),
+        switchMap(() =>
+          combineLatest([this.movimientosService.movimientos$, this.categoriaService.categorias$]),
+        ),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
-        next: (lista) => {
-          this.movimientos.set(lista);
+        next: ([movimientos, categorias]) => {
+          this.movimientos.set(movimientos);
+          this.categorias.set(categorias);
           this.estado.set('listo');
         },
         error: () => this.estado.set('error'),
@@ -189,18 +201,33 @@ export class MovimientosPageComponent implements OnInit {
   }
 
   // El mismo modal sirve para crear y para editar: aquí se decide qué servicio llamar.
-  protected guardar(datos: NuevoGasto): void {
+  protected guardar(datos: MovimientoDto): void {
     const actual = this.editando();
     if (actual) this.actualizar(actual.id, datos);
-    else this.registrar(datos);
+    else this.crear(datos);
   }
 
-  private actualizar(id: string, datos: NuevoGasto): void {
-    this.movimientosService.actualizarGasto(id, datos).subscribe({
+  private crear(datos: MovimientoDto): void {
+    this.movimientosService.create(datos).subscribe({
       next: (movimiento) => {
         this.cerrarModal();
-        this.nuevoId.set(movimiento.id);
-        setTimeout(() => this.nuevoId.set(null), 1800);
+        this.resaltar(movimiento.id);
+        const categoria = this.nombresCategoria().get(movimiento.categoria_id) ?? '';
+        this.toastService.mostrar({
+          mensaje: `Registraste ${this.cop.transform(movimiento.monto)} en ${categoria}`,
+          accionTexto: 'Deshacer',
+          accion: () => this.movimientosService.delete(movimiento.id).subscribe(),
+        });
+      },
+      error: () => this.toastService.mostrar({ mensaje: 'No pudimos registrar el gasto.' }),
+    });
+  }
+
+  private actualizar(id: string, datos: MovimientoDto): void {
+    this.movimientosService.update(id, datos).subscribe({
+      next: (movimiento) => {
+        this.cerrarModal();
+        this.resaltar(movimiento.id);
         this.toastService.mostrar({ mensaje: `Actualizaste "${movimiento.descripcion}"` });
       },
       error: () => this.toastService.mostrar({ mensaje: 'No pudimos guardar los cambios.' }),
@@ -220,7 +247,7 @@ export class MovimientosPageComponent implements OnInit {
     const movimiento = this.porEliminar();
     if (!movimiento) return;
     this.eliminando.set(true);
-    this.movimientosService.eliminarGasto(movimiento.id).subscribe({
+    this.movimientosService.delete(movimiento.id).subscribe({
       next: () => {
         this.eliminando.set(false);
         this.porEliminar.set(null);
@@ -234,19 +261,8 @@ export class MovimientosPageComponent implements OnInit {
     });
   }
 
-  private registrar(datos: NuevoGasto): void {
-    this.movimientosService.registrarGasto(datos).subscribe({
-      next: (movimiento) => {
-        this.cerrarModal();
-        this.nuevoId.set(movimiento.id);
-        setTimeout(() => this.nuevoId.set(null), 1800);
-        this.toastService.mostrar({
-          mensaje: `Registraste ${this.cop.transform(movimiento.monto)} en ${movimiento.categoria}`,
-          accionTexto: 'Deshacer',
-          accion: () => this.movimientosService.deshacerGasto(movimiento.id).subscribe(),
-        });
-      },
-      error: () => this.toastService.mostrar({ mensaje: 'No pudimos registrar el gasto.' }),
-    });
+  private resaltar(id: string): void {
+    this.nuevoId.set(id);
+    setTimeout(() => this.nuevoId.set(null), 1800);
   }
 }

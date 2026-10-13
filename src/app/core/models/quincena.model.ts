@@ -1,23 +1,9 @@
-import { Categoria } from './categoria';
-import { Movimiento } from './movimiento.model';
-import { PagoFijo } from './pago-fijo.model';
+import { Periodo } from './periodo.model';
+import { PagoProximo } from './pago-proximo.model';
 
 export interface Arrastre {
   tipo: 'sobrante' | 'deficit';
   monto: number;
-}
-
-export interface QuincenaActual {
-  id: string;
-  titulo: string;
-  inicio: string;
-  fin: string;
-  diaActual: number;
-  dias: number;
-  ingreso: number;
-  arrastre: Arrastre;
-  escenarioDeficit: Arrastre;
-  pagosFijos: PagoFijo[];
 }
 
 export interface PagoFijoCerrado {
@@ -28,7 +14,7 @@ export interface PagoFijoCerrado {
 
 export interface MovimientoCerrado {
   descripcion: string;
-  categoria: Categoria;
+  categoria: string;
   fecha: string; // "30 sep"
   monto: number;
 }
@@ -45,16 +31,11 @@ export interface QuincenaCerrada {
   ultimosMovimientos: MovimientoCerrado[];
 }
 
-export interface DatosMock {
-  quincenaActual: QuincenaActual;
-  movimientos: Movimiento[];
-  categorias: Categoria[];
-  quincenasCerradas: QuincenaCerrada[];
-}
-
-// Datos que devuelve getResumen() (sin calcular nada todavía).
+// Datos que devuelve getResumen() (todavía sin calcular nada).
 export interface ResumenBase {
-  actual: QuincenaActual;
+  hoy: string; // fecha "de hoy" simulada, yyyy-MM-dd
+  periodo: Periodo;
+  pagos: PagoProximo[];
   cerradas: QuincenaCerrada[];
 }
 

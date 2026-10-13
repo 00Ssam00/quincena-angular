@@ -29,17 +29,45 @@ export function fechaLarga(iso: string): string {
   return `${nombreDia} ${dia} de ${MESES[mes - 1]}`;
 }
 
-// Fecha ISO de un día del mes de una quincena: ("2026-10-01", 10) -> "2026-10-10"
-export function fechaDelDia(inicioIso: string, dia: number): string {
-  const { anio, mes } = partes(inicioIso);
-  return `${anio}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+// Día del mes de una fecha ISO: "2026-10-10" -> 10
+export function diaDeFecha(iso: string): number {
+  return Number(iso.slice(8, 10));
+}
+
+// "2026-10-10" y -1 -> "2026-10-09"
+export function sumarDias(iso: string, dias: number): string {
+  const { anio, mes, dia } = partes(iso);
+  const fecha = new Date(Date.UTC(anio, mes - 1, dia + dias));
+  return fecha.toISOString().slice(0, 10);
+}
+
+// Cantidad de días de un periodo, contando el primero y el último.
+export function diasDelPeriodo(inicio: string, fin: string): number {
+  const a = partes(inicio);
+  const b = partes(fin);
+  const ms = Date.UTC(b.anio, b.mes - 1, b.dia) - Date.UTC(a.anio, a.mes - 1, a.dia);
+  return Math.round(ms / 86400000) + 1;
+}
+
+// Hora de un timestamp local "2026-10-10T18:40:00" -> "6:40 p. m."
+export function horaDeTimestamp(iso: string): string {
+  return horaActual(new Date(iso));
+}
+
+// Fecha y hora local actual como "yyyy-MM-ddTHH:mm:ss" (sin zona horaria).
+export function timestampLocal(ahora: Date = new Date()): string {
+  const dos = (n: number) => String(n).padStart(2, '0');
+  return (
+    `${ahora.getFullYear()}-${dos(ahora.getMonth() + 1)}-${dos(ahora.getDate())}` +
+    `T${dos(ahora.getHours())}:${dos(ahora.getMinutes())}:${dos(ahora.getSeconds())}`
+  );
 }
 
 // Hora actual como "6:40 p. m."
 export function horaActual(ahora: Date = new Date()): string {
   return new Intl.DateTimeFormat('es-CO', { hour: 'numeric', minute: '2-digit', hour12: true })
     .format(ahora)
-    .replace(/ | /g, ' ')
+    .replace(/\u202f|\u00a0/g, ' ')
     .toLowerCase();
 }
 

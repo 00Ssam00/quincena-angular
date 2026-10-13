@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { CopPipe } from './pipes/cop.pipe';
+import { DiaHoraPipe } from './pipes/dia-hora.pipe';
 import { LogoComponent } from './components/logo/logo.component';
 import { CardComponent } from './components/card/card.component';
 import { SkeletonComponent } from './components/skeleton/skeleton.component';
@@ -16,6 +17,7 @@ import { FocusTrapDirective } from './directives/focus-trap.directive';
 
 const PIEZAS = [
   CopPipe,
+  DiaHoraPipe,
   LogoComponent,
   CardComponent,
   SkeletonComponent,

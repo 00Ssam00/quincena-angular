@@ -101,8 +101,8 @@
     [saldo]="v.saldo"
     [pagosPendientes]="v.totalPagosPendientes"
     [diasRestantes]="v.diasRestantes"
-    [diaHoy]="v.diaActual"
-    [mes]="mesActual()"
+    [fechaHoy]="base()!.hoy"
+    [categorias]="categorias()"
     (guardar)="registrar($event)"
     (cerrar)="cerrarModal()"
   />

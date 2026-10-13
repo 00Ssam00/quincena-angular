@@ -1,13 +1,14 @@
 import { Component, computed, DestroyRef, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { map, switchMap } from 'rxjs';
-import { Movimiento, NuevoGasto } from '../../../core/models/movimiento.model';
+import { combineLatest, map, switchMap } from 'rxjs';
+import { Categoria } from '../../../core/models/categoria.model';
+import { Movimiento, MovimientoDto } from '../../../core/models/movimiento.model';
 import { ResumenBase, VistaQuincena } from '../../../core/models/quincena.model';
+import { CategoriaService } from '../../../core/services/categoria.service';
 import { MovimientosService } from '../../../core/services/movimientos.service';
 import { QuincenaService } from '../../../core/services/quincena.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { abreviaturaMes } from '../../../core/utils/fechas';
 import { CopPipe } from '../../../shared/pipes/cop.pipe';
 
 // Componente CONTENEDOR: inyecta servicios y maneja carga, periodo y modal.
@@ -22,6 +23,7 @@ export class DashboardPageComponent implements OnInit {
   protected readonly cargando = signal(true);
   protected readonly base = signal<ResumenBase | null>(null);
   protected readonly movimientos = signal<Movimiento[]>([]);
+  protected readonly categorias = signal<Categoria[]>([]);
   protected readonly indicePeriodo = signal(0); // 0 = quincena actual; 1.. = cerradas
   protected readonly escenarioDeficit = signal(false);
   protected readonly modalAbierto = signal(false);
@@ -40,16 +42,11 @@ export class DashboardPageComponent implements OnInit {
     const i = this.indicePeriodo();
     if (i === 0) {
       const arrastre = this.escenarioDeficit()
-        ? base.actual.escenarioDeficit
-        : base.actual.arrastre;
-      return this.quincenaService.vistaActual(base.actual, this.movimientos(), arrastre);
+        ? this.quincenaService.arrastreDeficit
+        : base.periodo.arrastre;
+      return this.quincenaService.vistaActual(base, this.movimientos(), this.categorias(), arrastre);
     }
     return this.quincenaService.vistaCerrada(base.cerradas[i - 1]);
-  });
-
-  protected readonly mesActual = computed(() => {
-    const base = this.base();
-    return base ? abreviaturaMes(base.actual.inicio) : '';
   });
 
   private readonly cop = new CopPipe();
@@ -57,6 +54,7 @@ export class DashboardPageComponent implements OnInit {
   constructor(
     private quincenaService: QuincenaService,
     private movimientosService: MovimientosService,
+    private categoriaService: CategoriaService,
     private toastService: ToastService,
     private route: ActivatedRoute,
     private destroyRef: DestroyRef,
@@ -72,13 +70,19 @@ export class DashboardPageComponent implements OnInit {
     this.quincenaService
       .getResumen()
       .pipe(
-        switchMap((base) => this.movimientosService.movimientos$.pipe(map((m) => ({ base, m })))),
+        switchMap((base) =>
+          combineLatest([
+            this.movimientosService.movimientos$,
+            this.categoriaService.categorias$,
+          ]).pipe(map(([m, c]) => ({ base, m, c }))),
+        ),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
-        next: ({ base, m }) => {
+        next: ({ base, m, c }) => {
           this.base.set(base);
           this.movimientos.set(m);
+          this.categorias.set(c);
           this.cargando.set(false);
         },
         error: () => {
@@ -108,19 +112,23 @@ export class DashboardPageComponent implements OnInit {
     this.modalAbierto.set(false);
   }
 
-  protected registrar(datos: NuevoGasto): void {
-    this.movimientosService.registrarGasto(datos).subscribe({
+  protected registrar(datos: MovimientoDto): void {
+    this.movimientosService.create(datos).subscribe({
       next: (movimiento) => {
         this.cerrarModal();
         this.nuevoId.set(movimiento.id);
         setTimeout(() => this.nuevoId.set(null), 1800);
         this.toastService.mostrar({
-          mensaje: `Registraste ${this.cop.transform(movimiento.monto)} en ${movimiento.categoria}`,
+          mensaje: `Registraste ${this.cop.transform(movimiento.monto)} en ${this.nombreCategoria(movimiento.categoria_id)}`,
           accionTexto: 'Deshacer',
-          accion: () => this.movimientosService.deshacerGasto(movimiento.id).subscribe(),
+          accion: () => this.movimientosService.delete(movimiento.id).subscribe(),
         });
       },
       error: () => this.toastService.mostrar({ mensaje: 'No pudimos registrar el gasto.' }),
     });
+  }
+
+  private nombreCategoria(id: string): string {
+    return this.categorias().find((c) => c.id === id)?.nombre ?? '';
   }
 }

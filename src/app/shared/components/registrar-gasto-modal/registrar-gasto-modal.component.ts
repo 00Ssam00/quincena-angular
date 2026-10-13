@@ -13,9 +13,10 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, Validators } from '@angular/forms';
-import { CATEGORIAS, Categoria } from '../../../core/models/categoria';
-import { Movimiento, NuevoGasto } from '../../../core/models/movimiento.model';
+import { Categoria } from '../../../core/models/categoria.model';
+import { Movimiento, MovimientoDto } from '../../../core/models/movimiento.model';
 import { calcularVistaPrevia } from '../../../core/utils/calculos';
+import { abreviaturaMes, diaDeFecha, sumarDias } from '../../../core/utils/fechas';
 import { ChipOpcion } from '../category-chips/category-chips.component';
 import { OpcionToggle } from '../segmented-toggle/segmented-toggle.component';
 
@@ -33,26 +34,29 @@ export class RegistrarGastoModalComponent implements OnInit, AfterViewInit, OnDe
   saldo = input.required<number>();
   pagosPendientes = input.required<number>();
   diasRestantes = input.required<number>();
-  diaHoy = input.required<number>();
-  mes = input.required<string>(); // "oct"
+  fechaHoy = input.required<string>(); // yyyy-MM-dd
+  categorias = input.required<Categoria[]>();
   // null = registrar uno nuevo; con valor = editar ese movimiento (misma pantalla, mismo formulario)
   movimiento = input<Movimiento | null>(null);
 
-  guardar = output<NuevoGasto>();
+  guardar = output<MovimientoDto>();
   cerrar = output<void>();
 
   protected readonly formulario;
   protected readonly montoTexto = signal('');
   protected readonly intentoEnviar = signal(false);
 
-  protected readonly opcionesCategoria: ChipOpcion[] = CATEGORIAS.map((c) => ({
-    valor: c,
-    etiqueta: c,
-  }));
+  // Los chips salen de las categorías que entrega el padre (vienen de CategoriaService).
+  protected readonly opcionesCategoria = computed<ChipOpcion[]>(() =>
+    this.categorias().map((c) => ({ valor: c.id, etiqueta: c.nombre })),
+  );
+
+  protected readonly fechaAyer = computed(() => sumarDias(this.fechaHoy(), -1));
+  protected readonly mes = computed(() => abreviaturaMes(this.fechaHoy()));
 
   protected readonly opcionesFecha = computed<OpcionToggle[]>(() => [
-    { valor: 'ayer', etiqueta: `Ayer – ${this.diaHoy() - 1} ${this.mes()}` },
-    { valor: 'hoy', etiqueta: `Hoy – ${this.diaHoy()} ${this.mes()}` },
+    { valor: 'ayer', etiqueta: `Ayer – ${diaDeFecha(this.fechaAyer())} ${this.mes()}` },
+    { valor: 'hoy', etiqueta: `Hoy – ${diaDeFecha(this.fechaHoy())} ${this.mes()}` },
   ]);
 
   // Bandera nuevo / edición, y textos que dependen de ella.
@@ -63,8 +67,10 @@ export class RegistrarGastoModalComponent implements OnInit, AfterViewInit, OnDe
   // Solo se puede mover entre Ayer y Hoy; un movimiento de otro día conserva su fecha.
   protected readonly fechaEditable = computed(() => {
     const m = this.movimiento();
-    return !m || m.dia === this.diaHoy() || m.dia === this.diaHoy() - 1;
+    return !m || m.fecha === this.fechaHoy() || m.fecha === this.fechaAyer();
   });
+
+  protected readonly diaFija = computed(() => diaDeFecha(this.movimiento()?.fecha ?? this.fechaHoy()));
 
   private readonly valores;
   protected readonly vistaPrevia = computed(() => {
@@ -81,7 +87,7 @@ export class RegistrarGastoModalComponent implements OnInit, AfterViewInit, OnDe
     this.formulario = this.fb.group({
       monto: this.fb.control<number | null>(null, [Validators.required, Validators.min(1)]),
       descripcion: this.fb.nonNullable.control('', Validators.maxLength(40)),
-      categoria: this.fb.control<Categoria | null>(null, Validators.required),
+      categoria: this.fb.control<string | null>(null, Validators.required), // id de la categoría
       dia: this.fb.nonNullable.control<'ayer' | 'hoy'>('hoy'),
     });
     this.valores = toSignal(this.formulario.valueChanges);
@@ -94,8 +100,8 @@ export class RegistrarGastoModalComponent implements OnInit, AfterViewInit, OnDe
     this.formulario.setValue({
       monto: m.monto,
       descripcion: m.descripcion,
-      categoria: m.categoria,
-      dia: m.dia === this.diaHoy() - 1 ? 'ayer' : 'hoy',
+      categoria: m.categoria_id,
+      dia: m.fecha === this.fechaAyer() ? 'ayer' : 'hoy',
     });
     this.montoTexto.set(String(m.monto).replace(/\B(?=(\d{3})+(?!\d))/g, '.'));
   }
@@ -126,7 +132,7 @@ export class RegistrarGastoModalComponent implements OnInit, AfterViewInit, OnDe
   }
 
   protected elegirCategoria(valor: string): void {
-    this.formulario.controls.categoria.setValue(valor as Categoria);
+    this.formulario.controls.categoria.setValue(valor);
     this.formulario.controls.categoria.markAsTouched();
   }
 
@@ -141,11 +147,13 @@ export class RegistrarGastoModalComponent implements OnInit, AfterViewInit, OnDe
       return;
     }
     const v = this.formulario.getRawValue();
+    // Sin descripción se usa el nombre de la categoría.
+    const nombre = this.categorias().find((c) => c.id === v.categoria)?.nombre ?? '';
     this.guardar.emit({
       monto: v.monto as number,
-      descripcion: v.descripcion,
-      categoria: v.categoria as Categoria,
-      dia: this.diaElegido(v.dia),
+      descripcion: v.descripcion.trim() || nombre,
+      categoria_id: v.categoria as string,
+      fecha: this.fechaElegida(v.dia),
     });
   }
 
@@ -153,8 +161,8 @@ export class RegistrarGastoModalComponent implements OnInit, AfterViewInit, OnDe
     if (evento.target === evento.currentTarget) this.cerrar.emit();
   }
 
-  private diaElegido(opcion: 'ayer' | 'hoy'): number {
-    if (!this.fechaEditable()) return this.movimiento()!.dia;
-    return opcion === 'hoy' ? this.diaHoy() : this.diaHoy() - 1;
+  private fechaElegida(opcion: 'ayer' | 'hoy'): string {
+    if (!this.fechaEditable()) return this.movimiento()!.fecha;
+    return opcion === 'hoy' ? this.fechaHoy() : this.fechaAyer();
   }
 }

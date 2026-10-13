@@ -5,28 +5,35 @@
   </header>
 
   <ul class="lista">
-    @for (m of grupo().items; track m.id; let i = $index) {
-      <li class="fila" [class.nueva]="m.id === nuevoId()" [style.animation-delay.ms]="120 + i * 60">
+    @for (item of grupo().items; track item.movimiento.id; let i = $index) {
+      <li
+        class="fila"
+        [class.nueva]="item.movimiento.id === nuevoId()"
+        [style.animation-delay.ms]="120 + i * 60"
+      >
         <span>
-          <span class="nombre">{{ m.nombre }}</span>
-          <span class="detalle">{{ m.subtitulo }}</span>
+          <span class="nombre">{{ item.movimiento.descripcion }}</span>
+          <span class="detalle">
+            {{ item.categoria }} –
+            {{ item.esPagoFijo ? 'Pago fijo' : (item.movimiento | diaHora: 'hora') }}
+          </span>
         </span>
         <span class="derecha">
-          <span class="monto tabular">{{ -m.monto | cop }}</span>
+          <span class="monto tabular">{{ -item.movimiento.monto | cop }}</span>
           <span class="acciones">
             <button
               type="button"
               class="accion"
-              [attr.aria-label]="'Editar ' + m.nombre"
-              (click)="editar.emit(m.id)"
+              [attr.aria-label]="'Editar ' + item.movimiento.descripcion"
+              (click)="editar.emit(item.movimiento.id)"
             >
               Editar
             </button>
             <button
               type="button"
               class="accion peligro"
-              [attr.aria-label]="'Eliminar ' + m.nombre"
-              (click)="eliminar.emit(m.id)"
+              [attr.aria-label]="'Eliminar ' + item.movimiento.descripcion"
+              (click)="eliminar.emit(item.movimiento.id)"
             >
               Eliminar
             </button>

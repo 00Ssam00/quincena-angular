@@ -54,7 +54,7 @@
       <app-card>
         @if (grupos().length > 0) {
           <div class="grupos">
-            @for (g of grupos(); track g.dia; let i = $index) {
+            @for (g of grupos(); track g.fecha; let i = $index) {
               <app-movement-day-group
                 [grupo]="g"
                 [indice]="i"
@@ -84,8 +84,8 @@
     [saldo]="contexto().saldo"
     [pagosPendientes]="contexto().totalPagosPendientes"
     [diasRestantes]="contexto().diasRestantes"
-    [diaHoy]="contexto().diaActual"
-    [mes]="mes"
+    [fechaHoy]="base.hoy"
+    [categorias]="categorias()"
     [movimiento]="editando()"
     (guardar)="guardar($event)"
     (cerrar)="cerrarModal()"
