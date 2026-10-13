@@ -1,0 +1,20 @@
+<app-card>
+  <header class="cabecera">
+    <h2>{{ vista().cerrada ? 'Pagos fijos' : 'Próximos pagos fijos' }}</h2>
+    <span class="dato tabular">{{ vista().totalPagosPendientes | cop }}</span>
+  </header>
+
+  <ul class="lista">
+    @for (p of vista().pagosFijos; track p.id; let i = $index) {
+      <li class="fila" [style.animation-delay.ms]="80 + i * 60">
+        <div>
+          <p class="nombre">{{ p.nombre }}</p>
+          <p class="detalle">{{ p.fechaTexto }}</p>
+        </div>
+        <span class="monto tabular">{{ p.monto | cop }}</span>
+      </li>
+    } @empty {
+      <li class="vacio">No tienes pagos fijos pendientes.</li>
+    }
+  </ul>
+</app-card>

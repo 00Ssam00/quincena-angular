@@ -1,0 +1,15 @@
+:host {
+  display: block;
+  box-sizing: border-box;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: clamp(22px, 2.2vw, 28px);
+  transition:
+    background-color var(--dur-theme) ease,
+    border-color var(--dur-theme) ease;
+}
+
+:host(.grande) {
+  padding: clamp(22px, 2.4vw, 32px);
+}

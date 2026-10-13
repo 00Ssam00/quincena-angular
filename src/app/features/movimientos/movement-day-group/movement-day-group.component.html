@@ -1,0 +1,18 @@
+<section class="grupo" [style.animation-delay.ms]="indice() * 70">
+  <header class="encabezado">
+    <h3 [class.reciente]="grupo().reciente">{{ grupo().titulo }}</h3>
+    <span class="subtotal tabular">{{ -grupo().subtotal | cop }}</span>
+  </header>
+
+  <ul class="lista">
+    @for (m of grupo().items; track m.id; let i = $index) {
+      <li class="fila" [class.nueva]="m.id === nuevoId()" [style.animation-delay.ms]="120 + i * 60">
+        <span>
+          <span class="nombre">{{ m.nombre }}</span>
+          <span class="detalle">{{ m.subtitulo }}</span>
+        </span>
+        <span class="monto tabular">{{ -m.monto | cop }}</span>
+      </li>
+    }
+  </ul>
+</section>

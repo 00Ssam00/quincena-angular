@@ -1,0 +1,61 @@
+<app-card>
+  <header class="cabecera">
+    <h2>Gasto diario</h2>
+    <span class="dato tabular">
+      {{ vista().cerrada ? 'Promedio' : 'Ritmo sugerido' }} {{ vista().valorLinea | cop }} / día
+    </span>
+  </header>
+
+  <div class="grafico" role="img" [attr.aria-label]="resumenAccesible()">
+    <div class="area">
+      <div class="linea" [style.bottom.%]="altoLinea()"></div>
+
+      @for (c of vista().columnas; track c.dia; let i = $index) {
+        <div
+          class="columna"
+          [class.atenuada]="activa() !== null && activa() !== i"
+          (mouseenter)="entrar(i)"
+          (mouseleave)="salir()"
+        >
+          <div
+            class="barra"
+            [class.pasado]="c.estado === 'pasado'"
+            [class.hoy]="c.estado === 'hoy'"
+            [class.futuro]="c.estado === 'futuro'"
+            [class.excedida]="c.excedido"
+            [class.activa]="activa() === i"
+            [style.height.%]="alto(c)"
+            [style.animation-delay.ms]="300 + i * 40"
+          ></div>
+          <div class="tooltip" [class.visible]="activa() === i" [style.bottom]="posicionTooltip(c)">
+            <span class="tabular">
+              @if (c.estado === 'futuro') {≈ }{{ c.valor | cop }}
+            </span>
+            <span class="detalle">
+              {{ c.etiqueta }}@if (c.excedido) { – {{ c.exceso | cop }} sobre tu presupuesto}
+            </span>
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="dias">
+      @for (c of vista().columnas; track c.dia; let i = $index) {
+        <span class="dia tabular" [class.resaltado]="activa() === i">{{ c.dia }}</span>
+      }
+    </div>
+  </div>
+
+  <div class="leyenda">
+    <span class="item">
+      <span class="cuadro normal"></span>
+      <span>Dentro de tu presupuesto diario de {{ vista().presupuestoDiario | cop }}</span>
+    </span>
+    @if (vista().diasExcedidos > 0) {
+      <span class="item excedido">
+        <span class="cuadro alerta"></span>
+        <span>Te pasaste en {{ vista().diasExcedidos }} {{ vista().diasExcedidos === 1 ? 'día' : 'días' }}</span>
+      </span>
+    }
+  </div>
+</app-card>

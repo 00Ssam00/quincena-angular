@@ -1,0 +1,86 @@
+<div class="pagina">
+  <header class="encabezado">
+    <div>
+      <p class="periodo">{{ titulo }}</p>
+      <h1>Movimientos</h1>
+    </div>
+    <button
+      type="button"
+      class="boton primario"
+      [disabled]="estado() !== 'listo'"
+      (click)="abrirModal()"
+    >
+      Registrar gasto
+    </button>
+  </header>
+
+  @if (estado() === 'cargando') {
+    <div class="carga" aria-busy="true">
+      <app-skeleton width="min(420px, 100%)" height="44px" radius="10px" />
+      <app-skeleton width="min(520px, 100%)" height="38px" radius="999px" />
+      <app-card>
+        <div class="grupos-carga">
+          @for (g of [1, 2, 3]; track g) {
+            <div class="grupo-carga">
+              <app-skeleton width="220px" height="16px" />
+              <app-skeleton height="44px" />
+              <app-skeleton height="44px" />
+            </div>
+          }
+        </div>
+      </app-card>
+    </div>
+  } @else if (estado() === 'error') {
+    <app-card>
+      <div class="mensaje" role="alert">
+        <div class="simbolo error"><app-logo variant="mark" /></div>
+        <h2>No pudimos cargar tus movimientos</h2>
+        <p>Revisa tu conexión e inténtalo de nuevo. Tus datos están a salvo.</p>
+        <button type="button" class="boton primario" (click)="reintentar()">Reintentar</button>
+      </div>
+    </app-card>
+  } @else {
+    <div class="contenido">
+      <app-movement-filters
+        [busqueda]="busqueda"
+        [hayTexto]="texto().length > 0"
+        [opciones]="opcionesChips()"
+        [categoria]="categoria()"
+        [resumen]="resumen()"
+        (seleccionarCategoria)="elegirCategoria($event)"
+        (limpiarBusqueda)="limpiarBusqueda()"
+      />
+
+      <app-card>
+        @if (grupos().length > 0) {
+          <div class="grupos">
+            @for (g of grupos(); track g.dia; let i = $index) {
+              <app-movement-day-group [grupo]="g" [indice]="i" [nuevoId]="nuevoId()" />
+            }
+          </div>
+        } @else {
+          <div class="mensaje">
+            <div class="simbolo"><app-logo variant="mark" /></div>
+            <h2>No encontramos movimientos</h2>
+            <p>Prueba con otra búsqueda o elige otra categoría.</p>
+            <button type="button" class="boton secundario" (click)="limpiarFiltros()">
+              Limpiar filtros
+            </button>
+          </div>
+        }
+      </app-card>
+    </div>
+  }
+</div>
+
+@if (modalAbierto()) {
+  <app-registrar-gasto-modal
+    [saldo]="contexto().saldo"
+    [pagosPendientes]="contexto().totalPagosPendientes"
+    [diasRestantes]="contexto().diasRestantes"
+    [diaHoy]="contexto().diaActual"
+    [mes]="mes"
+    (guardar)="registrar($event)"
+    (cerrar)="cerrarModal()"
+  />
+}

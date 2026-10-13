@@ -1,0 +1,81 @@
+:host {
+  display: block;
+}
+
+.cabecera {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+
+  h2 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 600;
+  }
+}
+
+.dato {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 0;
+  border-top: 1px solid var(--border);
+  box-shadow: none;
+  transition:
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+  animation: aparecer 400ms ease backwards;
+
+  &:hover {
+    background: var(--row-hover);
+    box-shadow:
+      -12px 0 0 var(--row-hover),
+      12px 0 0 var(--row-hover);
+  }
+}
+
+p {
+  margin: 0;
+}
+
+.nombre {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.detalle {
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.monto {
+  font-size: 15px;
+}
+
+.vacio {
+  padding: 13px 0;
+  border-top: 1px solid var(--border);
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+  }
+}

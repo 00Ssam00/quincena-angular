@@ -1,0 +1,71 @@
+.raiz {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg);
+  transition: background-color var(--dur-theme) ease;
+}
+
+.columna {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px clamp(16px, 3.4vw, 48px) 0;
+  font-size: 28px;
+}
+
+.boton-menu {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  background: rgba(23, 22, 20, 0.4);
+  animation: aparecer 250ms ease;
+}
+
+.principal {
+  flex: 1;
+  min-width: 0;
+  padding: clamp(20px, 3vw, 36px) clamp(16px, 3.4vw, 48px) 40px;
+}
+
+.contenido {
+  &.entrando {
+    animation: entrada 280ms ease-out;
+  }
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes entrada {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}

@@ -1,0 +1,80 @@
+// Quincena — design tokens. Importar en src/styles.scss antes que todo.
+:root {
+  --font-sans: 'Instrument Sans', system-ui, sans-serif;
+
+  // Marca
+  --brand: #01696f;
+  --brand-hover: #0c4e54;
+  --on-brand: #f7f6f2;
+
+  // Claro (default)
+  --bg: #f7f6f2;
+  --surface: #f9f8f5;
+  --text: #28251d;
+  --text-muted: #7a7974;
+  --border: rgba(40, 37, 29, 0.10);
+  --hover: rgba(40, 37, 29, 0.05);
+  --accent: #01696f;              // texto activo, enlaces
+  --accent-soft: rgba(1, 105, 111, 0.10);  // pastilla activa sidebar
+  --row-hover: rgba(1, 105, 111, 0.07);
+  --row-active: rgba(1, 105, 111, 0.13);
+  --row-new: rgba(1, 105, 111, 0.14);
+  --skeleton: rgba(40, 37, 29, 0.07);
+  --bar-past: #01696f;
+  --bar-past-hover: #0c4e54;
+  --bar-today: #28251d;
+  --bar-future: rgba(40, 37, 29, 0.07);
+  --knob: #f9f8f5;                // indicador de toggles
+  --mark: #01696f;                // color del símbolo del logo
+  --tooltip-bg: #28251d;
+  --tooltip-text: #f7f6f2;
+  --toast-action: #7cc4c4;
+  --focus: #01696f;
+  --danger: #a63d32;
+  --danger-hover: #8a3128;
+  --danger-soft: #f6e3df;
+  --danger-border: rgba(166, 61, 50, 0.22);
+
+  // Forma
+  --radius-sm: 7px;
+  --radius-md: 10px;   // botones, inputs, toggles
+  --radius-lg: 12px;   // resumen del modal, toast
+  --radius-card: 16px;
+  --radius-modal: 20px;
+  --radius-pill: 999px;
+  --shadow-modal: 0 24px 64px rgba(0, 0, 0, 0.18);
+  --shadow-toast: 0 12px 32px rgba(0, 0, 0, 0.18);
+
+  // Movimiento
+  --ease-out: cubic-bezier(.2, .7, .2, 1);
+  --dur-theme: 300ms;
+}
+
+[data-theme='dark'] {
+  --bg: #171614;
+  --surface: #1c1b19;
+  --text: #f7f6f2;
+  --text-muted: #9a988f;
+  --border: rgba(247, 246, 242, 0.08);
+  --hover: rgba(247, 246, 242, 0.05);
+  --accent: #5eb0b0;
+  --accent-soft: rgba(94, 176, 176, 0.12);
+  --row-hover: rgba(94, 176, 176, 0.09);
+  --row-active: rgba(94, 176, 176, 0.16);
+  --row-new: rgba(94, 176, 176, 0.18);
+  --skeleton: rgba(247, 246, 242, 0.07);
+  --bar-past: #3f9599;
+  --bar-past-hover: #5eb0b0;
+  --bar-today: #f7f6f2;
+  --bar-future: rgba(247, 246, 242, 0.07);
+  --knob: #2a2926;
+  --mark: #f7f6f2;
+  --tooltip-bg: #f7f6f2;
+  --tooltip-text: #171614;
+  --toast-action: #01696f;
+  --focus: #5eb0b0;
+  --danger: #e8897c;
+  --danger-hover: #f0a397;
+  --danger-soft: rgba(232, 137, 124, 0.14);
+  --danger-border: rgba(232, 137, 124, 0.28);
+}

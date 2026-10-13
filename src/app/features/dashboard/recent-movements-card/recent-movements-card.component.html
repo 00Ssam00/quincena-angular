@@ -1,0 +1,25 @@
+<app-card>
+  <header class="cabecera">
+    <h2>Últimos movimientos</h2>
+    <a class="ver-todos" routerLink="/movimientos">Ver todos</a>
+  </header>
+
+  <ul class="lista">
+    @for (m of vista().ultimos; track m.id; let i = $index) {
+      <li>
+        <a
+          class="fila"
+          [class.nueva]="m.id === nuevoId()"
+          [style.animation-delay.ms]="120 + i * 60"
+          routerLink="/movimientos"
+        >
+          <span>
+            <span class="nombre">{{ m.nombre }}</span>
+            <span class="detalle">{{ m.subtitulo }}</span>
+          </span>
+          <span class="monto tabular">{{ -m.monto | cop }}</span>
+        </a>
+      </li>
+    }
+  </ul>
+</app-card>

@@ -1,0 +1,50 @@
+@use 'styles/tokens';
+
+html,
+body {
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  transition:
+    background-color 300ms ease,
+    color 300ms ease;
+}
+
+button {
+  font: inherit;
+}
+
+a {
+  color: var(--accent);
+}
+
+// Clase utilitaria para cifras alineadas
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+// Texto solo para lectores de pantalla
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
+}

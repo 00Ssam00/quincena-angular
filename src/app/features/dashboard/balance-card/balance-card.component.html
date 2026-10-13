@@ -1,0 +1,28 @@
+<app-card [grande]="true">
+  <div class="contenido">
+    <div>
+      <p class="etiqueta">{{ vista().cerrada ? 'Saldo final' : 'Saldo disponible' }}</p>
+      <p class="cifra tabular" [class.negativa]="saldoMostrado() < 0">{{ saldoMostrado() | cop }}</p>
+      <p class="arrastre" [class.deficit]="esDeficit()">{{ textoArrastre() }}</p>
+    </div>
+
+    <div class="progreso-bloque">
+      <div class="segmentos" role="img" [attr.aria-label]="vista().cerrada ? 'Quincena cerrada' : 'Día ' + vista().diaActual + ' de ' + vista().dias">
+        @for (estado of segmentos(); track $index) {
+          <span
+            class="segmento"
+            [class.pasado]="estado === 'pasado'"
+            [class.hoy]="estado === 'hoy'"
+            [style.transition-delay.ms]="200 + $index * 45"
+          ></span>
+        }
+      </div>
+      <div class="pie">
+        <span class="nowrap tabular">
+          Gastado {{ vista().gastado | cop }} de {{ vista().disponibleTotal | cop }}
+        </span>
+        <span class="nowrap">{{ textoRestan() }}</span>
+      </div>
+    </div>
+  </div>
+</app-card>

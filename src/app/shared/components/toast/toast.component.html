@@ -1,0 +1,8 @@
+@if (toast(); as t) {
+  <div class="toast" role="status">
+    <span>{{ t.mensaje }}</span>
+    @if (t.accionTexto) {
+      <button type="button" class="accion" (click)="accionar.emit()">{{ t.accionTexto }}</button>
+    }
+  </div>
+}

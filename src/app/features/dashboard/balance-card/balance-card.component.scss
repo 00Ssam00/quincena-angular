@@ -1,0 +1,74 @@
+:host {
+  display: block;
+}
+
+.contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+p {
+  margin: 0;
+}
+
+.etiqueta {
+  font-size: 15px;
+  color: var(--text-muted);
+}
+
+.cifra {
+  margin-top: 8px;
+  font-size: clamp(44px, 5.4vw, 68px);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1;
+
+  &.negativa {
+    color: var(--danger);
+  }
+}
+
+.arrastre {
+  margin-top: 14px;
+  font-size: 14px;
+  color: var(--text-muted);
+
+  &.deficit {
+    color: var(--danger);
+  }
+}
+
+.segmentos {
+  display: flex;
+  gap: 4px;
+}
+
+.segmento {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--bar-future);
+  transition: background-color 300ms ease;
+
+  &.pasado {
+    background: var(--bar-past);
+  }
+
+  &.hoy {
+    background: var(--bar-today);
+  }
+}
+
+.pie {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.nowrap {
+  white-space: nowrap;
+}

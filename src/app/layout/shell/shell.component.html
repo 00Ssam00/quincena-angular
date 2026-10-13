@@ -1,0 +1,40 @@
+<div class="raiz">
+  <app-sidebar
+    [items]="items"
+    [indiceActivo]="indiceActivo()"
+    [tema]="tema()"
+    [esMovil]="esMovil()"
+    [abierta]="menuAbierto()"
+    (cambiarTema)="cambiarTema($event)"
+    (navegar)="cerrarMenu()"
+  />
+
+  @if (esMovil() && menuAbierto()) {
+    <div class="backdrop" (click)="cerrarMenu()"></div>
+  }
+
+  <div class="columna">
+    @if (esMovil()) {
+      <header class="cabecera">
+        <app-logo />
+        <button
+          type="button"
+          class="boton-menu"
+          aria-label="Abrir el menú"
+          [attr.aria-expanded]="menuAbierto()"
+          (click)="alternarMenu()"
+        >
+          Menú
+        </button>
+      </header>
+    }
+
+    <main class="principal">
+      <div class="contenido" #contenido>
+        <router-outlet (activate)="alActivarPagina()" />
+      </div>
+    </main>
+  </div>
+</div>
+
+<app-toast [toast]="toast()" (accionar)="accionarToast()" />

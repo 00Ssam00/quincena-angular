@@ -1,0 +1,104 @@
+<div class="overlay" (click)="alClicOverlay($event)">
+  <div
+    class="dialogo"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="titulo-modal"
+    #dialogo
+    (keydown)="alTeclear($event)"
+  >
+    <form class="formulario" [formGroup]="formulario" (ngSubmit)="enviar()" novalidate>
+      <header class="cabecera">
+        <h2 id="titulo-modal">Registrar gasto</h2>
+        <button type="button" class="cerrar" (click)="cerrar.emit()">Cerrar</button>
+      </header>
+
+      <div class="campo">
+        <label class="etiqueta" for="monto">Monto</label>
+        <div class="monto" [class.invalido]="mostrarError('monto')">
+          <span class="signo" aria-hidden="true">$</span>
+          <input
+            id="monto"
+            #campoMonto
+            class="monto-input tabular"
+            type="text"
+            inputmode="numeric"
+            autocomplete="off"
+            placeholder="0"
+            aria-label="Monto del gasto en pesos"
+            [attr.aria-invalid]="mostrarError('monto')"
+            [value]="montoTexto()"
+            (input)="alEscribirMonto($event)"
+            (blur)="formulario.controls.monto.markAsTouched()"
+          />
+        </div>
+        @if (mostrarError('monto')) {
+          <p class="error" role="alert">Ingresa un monto mayor a $0.</p>
+        }
+      </div>
+
+      <div class="campo">
+        <label class="etiqueta" for="descripcion">Descripción (opcional)</label>
+        <input
+          id="descripcion"
+          class="texto"
+          type="text"
+          maxlength="40"
+          placeholder="Si la dejas vacía usamos la categoría"
+          formControlName="descripcion"
+        />
+      </div>
+
+      <div class="campo">
+        <span class="etiqueta" [class.invalida]="mostrarError('categoria')">Categoría</span>
+        <app-category-chips
+          etiquetaAccesible="Categoría del gasto"
+          [opciones]="opcionesCategoria"
+          [seleccionado]="formulario.controls.categoria.value"
+          [error]="mostrarError('categoria')"
+          (seleccionar)="elegirCategoria($event)"
+        />
+        @if (mostrarError('categoria')) {
+          <p class="error" role="alert">Elige una categoría.</p>
+        }
+      </div>
+
+      <div class="campo">
+        <span class="etiqueta">Fecha</span>
+        <app-segmented-toggle
+          tamano="md"
+          variante="fecha"
+          etiquetaAccesible="Fecha del gasto"
+          [opciones]="opcionesFecha()"
+          [valor]="formulario.controls.dia.value"
+          (cambiar)="elegirDia($event)"
+        />
+      </div>
+
+      <div class="previa">
+        <div class="fila">
+          <span>Saldo después</span>
+          <strong class="tabular" [class.negativo]="vistaPrevia().saldoDespues < 0">
+            {{ vistaPrevia().saldoDespues | cop }}
+          </strong>
+        </div>
+        <div class="fila">
+          <span>Ritmo sugerido</span>
+          <span class="tabular" [class.negativo]="vistaPrevia().ritmo < 0">
+            {{ vistaPrevia().ritmo | cop }} / día
+          </span>
+        </div>
+        @if (vistaPrevia().superaSaldo) {
+          <p class="aviso">Este gasto supera tu saldo disponible.</p>
+        } @else if (vistaPrevia().noCubreFijos) {
+          <p class="aviso">Con este gasto no alcanzarías a cubrir tus pagos fijos.</p>
+        }
+      </div>
+
+      <footer class="acciones">
+        <button type="button" class="boton secundario" (click)="cerrar.emit()">Cancelar</button>
+        <button type="submit" class="boton primario">Registrar gasto</button>
+      </footer>
+    </form>
+  </div>
+</div>

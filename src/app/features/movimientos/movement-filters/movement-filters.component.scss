@@ -1,0 +1,68 @@
+.filtros {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.buscador {
+  flex: 1 1 280px;
+  max-width: 420px;
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 6px 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  transition: border-color 160ms ease;
+
+  &:focus-within {
+    border-color: var(--focus);
+  }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    min-height: 42px;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: 15px;
+
+    // La "x" nativa duplicaría el botón Limpiar.
+    &::-webkit-search-cancel-button {
+      display: none;
+    }
+  }
+}
+
+.limpiar {
+  min-height: 36px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--hover);
+  }
+}
+
+.resumen {
+  font-size: 14px;
+  color: var(--text-muted);
+}

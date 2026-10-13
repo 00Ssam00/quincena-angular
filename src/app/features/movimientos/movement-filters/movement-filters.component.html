@@ -1,0 +1,28 @@
+<div class="filtros">
+  <div class="fila">
+    <label class="buscador">
+      <span class="sr-only">Buscar movimientos</span>
+      <input
+        type="search"
+        placeholder="Buscar por descripción o categoría"
+        autocomplete="off"
+        [formControl]="busqueda()"
+      />
+      @if (hayTexto()) {
+        <button type="button" class="limpiar" (click)="limpiarBusqueda.emit()">Limpiar</button>
+      }
+    </label>
+
+    <span class="resumen tabular">
+      {{ resumen().cantidad }} {{ resumen().cantidad === 1 ? 'movimiento' : 'movimientos' }} –
+      {{ resumen().total | cop }}
+    </span>
+  </div>
+
+  <app-category-chips
+    etiquetaAccesible="Filtrar por categoría"
+    [opciones]="opciones()"
+    [seleccionado]="categoria()"
+    (seleccionar)="seleccionarCategoria.emit($event)"
+  />
+</div>

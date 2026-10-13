@@ -1,0 +1,15 @@
+:host {
+  display: block;
+  background: var(--skeleton);
+  animation: pulso 1.6s ease-in-out infinite;
+}
+
+@keyframes pulso {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}

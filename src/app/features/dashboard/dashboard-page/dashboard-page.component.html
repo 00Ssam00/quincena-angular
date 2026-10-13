@@ -1,0 +1,109 @@
+@if (cargando() || !vista()) {
+  <div class="pagina" aria-busy="true">
+    <header class="encabezado">
+      <div class="saludo-carga">
+        <app-skeleton width="260px" height="20px" />
+        <app-skeleton width="200px" height="32px" />
+      </div>
+      <app-skeleton width="160px" height="44px" radius="10px" />
+    </header>
+    <div class="fila">
+      <app-card [grande]="true" class="balance">
+        <div class="bloque-carga">
+          <app-skeleton width="140px" height="16px" />
+          <app-skeleton width="min(320px, 80%)" height="64px" radius="12px" />
+          <app-skeleton width="70%" height="14px" />
+          <app-skeleton height="8px" radius="4px" />
+        </div>
+      </app-card>
+      <app-card class="lateral">
+        <div class="bloque-carga">
+          <app-skeleton width="60%" height="20px" />
+          <app-skeleton height="44px" />
+          <app-skeleton height="44px" />
+          <app-skeleton height="44px" />
+        </div>
+      </app-card>
+    </div>
+    <div class="fila">
+      <app-card class="balance">
+        <div class="bloque-carga">
+          <app-skeleton width="40%" height="20px" />
+          <app-skeleton height="200px" radius="12px" />
+        </div>
+      </app-card>
+      <app-card class="lateral">
+        <div class="bloque-carga">
+          <app-skeleton width="60%" height="20px" />
+          <app-skeleton height="44px" />
+          <app-skeleton height="44px" />
+          <app-skeleton height="44px" />
+        </div>
+      </app-card>
+    </div>
+  </div>
+} @else {
+  @if (vista(); as v) {
+    <div class="pagina cargado">
+      <header class="encabezado">
+        <div>
+          <div class="periodo">
+            <button
+              type="button"
+              class="flecha"
+              aria-label="Quincena anterior"
+              [disabled]="!puedeIrAtras()"
+              (click)="periodoAnterior()"
+            >
+              ‹
+            </button>
+            <span class="periodo-titulo">{{ v.titulo }}</span>
+            <button
+              type="button"
+              class="flecha"
+              aria-label="Quincena siguiente"
+              [disabled]="esActual()"
+              (click)="periodoSiguiente()"
+            >
+              ›
+            </button>
+          </div>
+          <h1>Hola, {{ nombre }}</h1>
+        </div>
+
+        <div class="acciones">
+          @if (esActual()) {
+            <span class="dia-actual">Día {{ v.diaActual }} de {{ v.dias }}</span>
+            <button type="button" class="boton primario" (click)="abrirModal()">Registrar gasto</button>
+          } @else {
+            <span class="pastilla-cerrada">Cerrada</span>
+            <button type="button" class="boton secundario" (click)="volverALaActual()">
+              Volver a la actual
+            </button>
+          }
+        </div>
+      </header>
+
+      <div class="fila">
+        <app-balance-card class="balance" [vista]="v" />
+        <app-fixed-payments-card class="lateral" [vista]="v" />
+      </div>
+      <div class="fila">
+        <app-daily-chart-card class="balance" [vista]="v" />
+        <app-recent-movements-card class="lateral" [vista]="v" [nuevoId]="nuevoId()" />
+      </div>
+    </div>
+  }
+}
+
+@if (modalAbierto() && vista(); as v) {
+  <app-registrar-gasto-modal
+    [saldo]="v.saldo"
+    [pagosPendientes]="v.totalPagosPendientes"
+    [diasRestantes]="v.diasRestantes"
+    [diaHoy]="v.diaActual"
+    [mes]="mesActual()"
+    (guardar)="registrar($event)"
+    (cerrar)="cerrarModal()"
+  />
+}

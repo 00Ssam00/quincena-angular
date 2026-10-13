@@ -1,0 +1,18 @@
+<div class="chips" role="group" [attr.aria-label]="etiquetaAccesible()">
+  @for (op of opciones(); track op.valor) {
+    <button
+      type="button"
+      class="chip"
+      [class.seleccionado]="op.valor === seleccionado()"
+      [class.error]="error()"
+      [class.vacio]="op.conteo === 0"
+      [attr.aria-pressed]="op.valor === seleccionado()"
+      (click)="seleccionar.emit(op.valor)"
+    >
+      {{ op.etiqueta }}
+      @if (op.conteo !== undefined) {
+        <span class="conteo tabular">{{ op.conteo }}</span>
+      }
+    </button>
+  }
+</div>

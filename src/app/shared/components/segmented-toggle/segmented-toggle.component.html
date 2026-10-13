@@ -1,0 +1,22 @@
+<div
+  class="toggle"
+  role="radiogroup"
+  [attr.aria-label]="etiquetaAccesible()"
+  [class.md]="tamano() === 'md'"
+  [class.fecha]="variante() === 'fecha'"
+  [class.segundo]="indice() === 1"
+>
+  <span class="indicador" aria-hidden="true"></span>
+  @for (op of opciones(); track op.valor; let i = $index) {
+    <button
+      type="button"
+      role="radio"
+      class="opcion"
+      [class.activa]="i === indice()"
+      [attr.aria-checked]="i === indice()"
+      (click)="cambiar.emit(op.valor)"
+    >
+      {{ op.etiqueta }}
+    </button>
+  }
+</div>

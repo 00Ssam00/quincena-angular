@@ -1,0 +1,33 @@
+<aside
+  class="sidebar"
+  [class.movil]="esMovil()"
+  [class.abierta]="abierta()"
+  [attr.inert]="esMovil() && !abierta() ? '' : null"
+  aria-label="Navegación principal"
+>
+  <div class="marca"><app-logo /></div>
+
+  <nav class="nav">
+    <span class="pastilla" aria-hidden="true" [style.transform]="desplazamiento()"></span>
+    @for (item of items(); track item.ruta; let i = $index) {
+      <a
+        class="item"
+        [class.activo]="i === indiceActivo()"
+        [routerLink]="'/' + item.ruta"
+        [attr.aria-current]="i === indiceActivo() ? 'page' : null"
+        (click)="navegar.emit()"
+      >
+        {{ item.etiqueta }}
+      </a>
+    }
+  </nav>
+
+  <div class="espaciador"></div>
+
+  <app-segmented-toggle
+    etiquetaAccesible="Tema de color"
+    [opciones]="opcionesTema"
+    [valor]="tema()"
+    (cambiar)="alCambiarTema($event)"
+  />
+</aside>
