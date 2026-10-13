@@ -28,6 +28,10 @@ export class MovimientosPageComponent implements OnInit {
   protected readonly movimientos = signal<Movimiento[]>([]);
   protected readonly categoria = signal(''); // '' = Todas
   protected readonly modalAbierto = signal(false);
+  // Bandera de edición: null = se está creando; con valor = se está editando ese movimiento.
+  protected readonly editando = signal<Movimiento | null>(null);
+  protected readonly porEliminar = signal<Movimiento | null>(null);
+  protected readonly eliminando = signal(false);
   protected readonly nuevoId = signal<string | null>(null);
 
   protected readonly busqueda = new FormControl('', { nonNullable: true });
@@ -168,14 +172,69 @@ export class MovimientosPageComponent implements OnInit {
   }
 
   protected abrirModal(): void {
+    this.editando.set(null);
+    this.modalAbierto.set(true);
+  }
+
+  protected abrirEdicion(id: string): void {
+    const movimiento = this.movimientos().find((m) => m.id === id);
+    if (!movimiento) return;
+    this.editando.set(movimiento);
     this.modalAbierto.set(true);
   }
 
   protected cerrarModal(): void {
     this.modalAbierto.set(false);
+    this.editando.set(null);
   }
 
-  protected registrar(datos: NuevoGasto): void {
+  // El mismo modal sirve para crear y para editar: aquí se decide qué servicio llamar.
+  protected guardar(datos: NuevoGasto): void {
+    const actual = this.editando();
+    if (actual) this.actualizar(actual.id, datos);
+    else this.registrar(datos);
+  }
+
+  private actualizar(id: string, datos: NuevoGasto): void {
+    this.movimientosService.actualizarGasto(id, datos).subscribe({
+      next: (movimiento) => {
+        this.cerrarModal();
+        this.nuevoId.set(movimiento.id);
+        setTimeout(() => this.nuevoId.set(null), 1800);
+        this.toastService.mostrar({ mensaje: `Actualizaste "${movimiento.descripcion}"` });
+      },
+      error: () => this.toastService.mostrar({ mensaje: 'No pudimos guardar los cambios.' }),
+    });
+  }
+
+  // --- Eliminar con confirmación ---
+  protected pedirEliminar(id: string): void {
+    this.porEliminar.set(this.movimientos().find((m) => m.id === id) ?? null);
+  }
+
+  protected cancelarEliminar(): void {
+    this.porEliminar.set(null);
+  }
+
+  protected confirmarEliminar(): void {
+    const movimiento = this.porEliminar();
+    if (!movimiento) return;
+    this.eliminando.set(true);
+    this.movimientosService.eliminarGasto(movimiento.id).subscribe({
+      next: () => {
+        this.eliminando.set(false);
+        this.porEliminar.set(null);
+        this.toastService.mostrar({ mensaje: `Eliminaste "${movimiento.descripcion}"` });
+      },
+      error: () => {
+        this.eliminando.set(false);
+        this.porEliminar.set(null);
+        this.toastService.mostrar({ mensaje: 'No pudimos eliminar el movimiento.' });
+      },
+    });
+  }
+
+  private registrar(datos: NuevoGasto): void {
     this.movimientosService.registrarGasto(datos).subscribe({
       next: (movimiento) => {
         this.cerrarModal();

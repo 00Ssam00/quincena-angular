@@ -11,6 +11,8 @@ import { SegmentedToggleComponent } from './components/segmented-toggle/segmente
 import { ToastComponent } from './components/toast/toast.component';
 import { RegistrarGastoModalComponent } from './components/registrar-gasto-modal/registrar-gasto-modal.component';
 import { ProximamenteComponent } from './components/proximamente/proximamente.component';
+import { ConfirmModalComponent } from './components/confirm-modal/confirm-modal.component';
+import { FocusTrapDirective } from './directives/focus-trap.directive';
 
 const PIEZAS = [
   CopPipe,
@@ -22,6 +24,8 @@ const PIEZAS = [
   ToastComponent,
   RegistrarGastoModalComponent,
   ProximamenteComponent,
+  ConfirmModalComponent,
+  FocusTrapDirective,
 ];
 
 // Piezas reutilizables (componentes de presentación y pipes) para cualquier módulo.

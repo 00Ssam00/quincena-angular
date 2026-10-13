@@ -10,10 +10,10 @@ export interface Movimiento {
   pagoFijoId?: string; // presente si el movimiento es un pago fijo ya pagado
 }
 
-// Lo que produce el modal "Registrar gasto".
+// Lo que produce el modal (al registrar o al editar un gasto).
 export interface NuevoGasto {
   monto: number;
   descripcion: string; // puede venir vacía: se usa el nombre de la categoría
   categoria: Categoria;
-  dia: 'ayer' | 'hoy';
+  dia: number; // día del mes
 }

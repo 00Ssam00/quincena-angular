@@ -11,7 +11,27 @@
           <span class="nombre">{{ m.nombre }}</span>
           <span class="detalle">{{ m.subtitulo }}</span>
         </span>
-        <span class="monto tabular">{{ -m.monto | cop }}</span>
+        <span class="derecha">
+          <span class="monto tabular">{{ -m.monto | cop }}</span>
+          <span class="acciones">
+            <button
+              type="button"
+              class="accion"
+              [attr.aria-label]="'Editar ' + m.nombre"
+              (click)="editar.emit(m.id)"
+            >
+              Editar
+            </button>
+            <button
+              type="button"
+              class="accion peligro"
+              [attr.aria-label]="'Eliminar ' + m.nombre"
+              (click)="eliminar.emit(m.id)"
+            >
+              Eliminar
+            </button>
+          </span>
+        </span>
       </li>
     }
   </ul>

@@ -1,0 +1,27 @@
+<div class="overlay" (click)="alClicOverlay($event)">
+  <div
+    class="dialogo"
+    role="alertdialog"
+    aria-modal="true"
+    aria-labelledby="titulo-confirmacion"
+    aria-describedby="mensaje-confirmacion"
+    appFocusTrap
+  >
+    <h2 id="titulo-confirmacion">{{ titulo() }}</h2>
+    <p id="mensaje-confirmacion">{{ mensaje() }}</p>
+
+    <div class="acciones">
+      <button type="button" class="boton secundario" #botonCancelar (click)="cancelar.emit()">
+        Cancelar
+      </button>
+      <button
+        type="button"
+        class="boton peligro"
+        [disabled]="procesando()"
+        (click)="confirmar.emit()"
+      >
+        {{ procesando() ? 'Eliminando…' : textoConfirmar() }}
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { MovimientoVista } from '../../../core/models/quincena.model';
 
 export interface GrupoDia {
@@ -20,4 +20,8 @@ export class MovementDayGroupComponent {
   grupo = input.required<GrupoDia>();
   indice = input(0); // para escalonar la animación de entrada
   nuevoId = input<string | null>(null);
+
+  // Los ids suben al contenedor: este componente solo presenta.
+  editar = output<string>();
+  eliminar = output<string>();
 }

@@ -6,6 +6,7 @@ import {
   ElementRef,
   input,
   OnDestroy,
+  OnInit,
   output,
   signal,
   viewChild,
@@ -13,7 +14,7 @@ import {
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, Validators } from '@angular/forms';
 import { CATEGORIAS, Categoria } from '../../../core/models/categoria';
-import { NuevoGasto } from '../../../core/models/movimiento.model';
+import { Movimiento, NuevoGasto } from '../../../core/models/movimiento.model';
 import { calcularVistaPrevia } from '../../../core/utils/calculos';
 import { ChipOpcion } from '../category-chips/category-chips.component';
 import { OpcionToggle } from '../segmented-toggle/segmented-toggle.component';
@@ -28,12 +29,14 @@ import { OpcionToggle } from '../segmented-toggle/segmented-toggle.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '(document:keydown.escape)': 'cerrar.emit()' },
 })
-export class RegistrarGastoModalComponent implements AfterViewInit, OnDestroy {
+export class RegistrarGastoModalComponent implements OnInit, AfterViewInit, OnDestroy {
   saldo = input.required<number>();
   pagosPendientes = input.required<number>();
   diasRestantes = input.required<number>();
   diaHoy = input.required<number>();
   mes = input.required<string>(); // "oct"
+  // null = registrar uno nuevo; con valor = editar ese movimiento (misma pantalla, mismo formulario)
+  movimiento = input<Movimiento | null>(null);
 
   guardar = output<NuevoGasto>();
   cerrar = output<void>();
@@ -52,14 +55,26 @@ export class RegistrarGastoModalComponent implements AfterViewInit, OnDestroy {
     { valor: 'hoy', etiqueta: `Hoy – ${this.diaHoy()} ${this.mes()}` },
   ]);
 
+  // Bandera nuevo / edición, y textos que dependen de ella.
+  protected readonly esNuevo = computed(() => this.movimiento() === null);
+  protected readonly titulo = computed(() => (this.esNuevo() ? 'Registrar gasto' : 'Editar gasto'));
+  protected readonly textoBoton = computed(() => (this.esNuevo() ? 'Registrar gasto' : 'Guardar cambios'));
+
+  // Solo se puede mover entre Ayer y Hoy; un movimiento de otro día conserva su fecha.
+  protected readonly fechaEditable = computed(() => {
+    const m = this.movimiento();
+    return !m || m.dia === this.diaHoy() || m.dia === this.diaHoy() - 1;
+  });
+
   private readonly valores;
   protected readonly vistaPrevia = computed(() => {
     const monto = this.valores()?.monto ?? 0;
-    return calcularVistaPrevia(this.saldo(), this.pagosPendientes(), this.diasRestantes(), monto);
+    // Al editar, el saldo ya descontó el monto anterior: se devuelve antes de calcular.
+    const saldoBase = this.saldo() + (this.movimiento()?.monto ?? 0);
+    return calcularVistaPrevia(saldoBase, this.pagosPendientes(), this.diasRestantes(), monto);
   });
 
   private readonly campoMonto = viewChild.required<ElementRef<HTMLInputElement>>('campoMonto');
-  private readonly dialogo = viewChild.required<ElementRef<HTMLElement>>('dialogo');
   private enfocadoAntes: HTMLElement | null = null;
 
   constructor(private fb: FormBuilder) {
@@ -70,6 +85,19 @@ export class RegistrarGastoModalComponent implements AfterViewInit, OnDestroy {
       dia: this.fb.nonNullable.control<'ayer' | 'hoy'>('hoy'),
     });
     this.valores = toSignal(this.formulario.valueChanges);
+  }
+
+  ngOnInit(): void {
+    const m = this.movimiento();
+    if (!m) return;
+    // El formulario se llena con una COPIA de los valores: el movimiento original no se toca.
+    this.formulario.setValue({
+      monto: m.monto,
+      descripcion: m.descripcion,
+      categoria: m.categoria,
+      dia: m.dia === this.diaHoy() - 1 ? 'ayer' : 'hoy',
+    });
+    this.montoTexto.set(String(m.monto).replace(/\B(?=(\d{3})+(?!\d))/g, '.'));
   }
 
   ngAfterViewInit(): void {
@@ -117,7 +145,7 @@ export class RegistrarGastoModalComponent implements AfterViewInit, OnDestroy {
       monto: v.monto as number,
       descripcion: v.descripcion,
       categoria: v.categoria as Categoria,
-      dia: v.dia,
+      dia: this.diaElegido(v.dia),
     });
   }
 
@@ -125,22 +153,8 @@ export class RegistrarGastoModalComponent implements AfterViewInit, OnDestroy {
     if (evento.target === evento.currentTarget) this.cerrar.emit();
   }
 
-  // Atrapa el foco dentro del diálogo (sin CDK).
-  protected alTeclear(evento: KeyboardEvent): void {
-    if (evento.key !== 'Tab') return;
-    const enfocables = this.dialogo().nativeElement.querySelectorAll<HTMLElement>(
-      'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
-    );
-    if (enfocables.length === 0) return;
-    const primero = enfocables[0];
-    const ultimo = enfocables[enfocables.length - 1];
-    const activo = document.activeElement;
-    if (evento.shiftKey && activo === primero) {
-      evento.preventDefault();
-      ultimo.focus();
-    } else if (!evento.shiftKey && activo === ultimo) {
-      evento.preventDefault();
-      primero.focus();
-    }
+  private diaElegido(opcion: 'ayer' | 'hoy'): number {
+    if (!this.fechaEditable()) return this.movimiento()!.dia;
+    return opcion === 'hoy' ? this.diaHoy() : this.diaHoy() - 1;
   }
 }

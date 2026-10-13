@@ -135,6 +135,12 @@
   color: var(--danger);
 }
 
+.fecha-fija {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
 .previa {
   display: flex;
   flex-direction: column;
